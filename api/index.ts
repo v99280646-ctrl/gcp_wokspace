@@ -13,17 +13,25 @@ export default async function handler(req: any, res: any) {
     body: body && body.length ? body : undefined,
   });
 
-  const response = await server.fetch(request, process.env, {});
+  try {
+    const response = await server.fetch(request, process.env, {});
 
-  res.status(response.status);
-  response.headers.forEach((value, name) => {
-    res.setHeader(name, value);
-  });
+    res.status(response.status);
+    response.headers.forEach((value, name) => {
+      res.setHeader(name, value);
+    });
 
-  if (response.body) {
-    const arrayBuffer = await response.arrayBuffer();
-    res.end(Buffer.from(arrayBuffer));
-  } else {
-    res.end();
+    if (response.body) {
+      const arrayBuffer = await response.arrayBuffer();
+      res.end(Buffer.from(arrayBuffer));
+    } else {
+      res.end();
+    }
+  } catch (err: any) {
+    // Log the error for Vercel logs and return a safe 500 response.
+    console.error('Server wrapper error:', err?.stack ?? err?.message ?? err);
+    res.statusCode = 500;
+    res.setHeader('content-type', 'text/plain');
+    res.end('Internal server error. Check function logs for details.');
   }
 }
